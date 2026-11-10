@@ -1,19 +1,15 @@
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
 from dotenv import load_dotenv
 from advisor import FinancialAdvisor
-from openai import AzureOpenAI
 
 load_dotenv()
 
 _advisors = {}
-
-def _get_azure_client():
-    return AzureOpenAI(
-        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-        api_version=os.getenv("OPENAI_API_VERSION"),
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    )
 
 def _advisor(sid):
     if sid and sid in _advisors:
@@ -22,7 +18,7 @@ def _advisor(sid):
 
 def handler(event, context):
     try:
-        body = json.loads(event.get("body", "{}"))
+        body = json.loads(event.get("body", "{}")) if isinstance(event.get("body"), str) else event.get("body", {})
         sid = body.get("sid")
         
         advisor = _advisor(sid)
@@ -35,8 +31,13 @@ def handler(event, context):
             "headers": {"Content-Type": "application/json"}
         }
     except Exception as exc:
+        import traceback
+        error_msg = f"{type(exc).__name__}: {exc}"
+        print(f"Error in reset handler: {error_msg}")
+        print(traceback.format_exc())
         return {
             "statusCode": 502,
-            "body": json.dumps({"error": f"Error resetting conversation: {exc}"}),
+            "body": json.dumps({"error": f"Error resetting conversation: {error_msg}"}),
             "headers": {"Content-Type": "application/json"}
         }
+

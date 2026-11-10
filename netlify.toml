@@ -13,3 +13,7 @@
     AZURE_OPENAI_ENDPOINT = "https://hadifinance.services.ai.azure.com"
     AZURE_OPENAI_DEPLOYMENT = "gpt-5-mini"
     OPENAI_API_VERSION = "2024-12-01-preview"
+
+[functions]
+  python_version = "3.11"
+
