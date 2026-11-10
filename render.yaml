@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: Financial-Advisor-Bot
+    env: python
+    region: us-east
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python web.py
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: AZURE_OPENAI_ENDPOINT
+        value: https://hadifinance.services.ai.azure.com
+      - key: AZURE_OPENAI_DEPLOYMENT
+        value: gpt-5-mini
+      - key: OPENAI_API_VERSION
+        value: 2024-12-01-preview

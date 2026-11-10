@@ -66,5 +66,6 @@ if __name__ == "__main__":
     if not os.getenv("AZURE_OPENAI_ENDPOINT"):
         sys.exit("AZURE_OPENAI_ENDPOINT is not set. Add it to the .env file.")
     port = int(os.getenv("PORT", "8000"))
+    host = os.getenv("HOST", "0.0.0.0")
     print(f"Financial Advisor Bot running at http://localhost:{port}")
-    app.run(host="127.0.0.1", port=port)
+    app.run(host=host, port=port, debug=False)
