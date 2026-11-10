@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financial Advisor Bot</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f4f8; --panel: #ffffff; --text: #1c2430; --muted: #667085;
+    --border: #e3e6eb; --accent: #0066cc; --accent-light: #e6f2ff;
+    --accent-text: #ffffff; --user-bg: #0066cc; --user-text: #ffffff;
+    --bot-bg: #f9fafb; --success: #16a34a; --warning: #ea580c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1419; --panel: #161c23; --text: #e6e9ee; --muted: #9aa4b2;
+      --border: #26303b; --accent: #3b82f6; --accent-light: #1e3a8a;
+      --accent-text: #f2f9fe; --user-bg: #2563eb; --user-text: #f2f9fe;
+      --bot-bg: #1b222b; --success: #22c55e; --warning: #fb923c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header {
+    background: linear-gradient(135deg, var(--accent) 0%, #0052a3 100%);
+    color: white; padding: 24px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .header-content {
+    max-width: 800px; margin: 0 auto; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; flex: 1; }
+  .header-logo {
+    font-size: 32px; line-height: 1; animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  .header-text h1 { font-size: 24px; margin: 0 0 4px; font-weight: 700; }
+  .header-text p { margin: 0; font-size: 13px; opacity: 0.95; }
+  #reset {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600;
+    transition: all 0.2s;
+  }
+  #reset:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+  button {
+    font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); padding: 7px 12px; transition: all 0.2s;
+  }
+  button:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+  main { flex: 1; overflow-y: auto; background: var(--bg); }
+  #log { max-width: 800px; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .welcome-section { text-align: center; padding: 40px 20px 20px; }
+  .welcome-section h2 { font-size: 28px; margin: 0 0 12px; color: var(--text); }
+  .welcome-section p { margin: 0 0 24px; color: var(--muted); font-size: 16px; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin: 24px 0;
+  }
+  .feature-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; text-align: center; cursor: default; transition: all 0.2s;
+  }
+  .feature-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .feature-icon { font-size: 32px; margin-bottom: 8px; }
+  .feature-text { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .msg { padding: 12px 16px; border-radius: 12px; max-width: 85%; overflow-wrap: anywhere; animation: slideIn 0.3s ease-out; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .user { align-self: flex-end; background: var(--user-bg); color: var(--user-text); white-space: pre-wrap; border-radius: 16px 16px 4px 16px; }
+  .bot { align-self: flex-start; background: var(--bot-bg); border: 1px solid var(--border); border-radius: 16px 16px 16px 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .bot > :first-child { margin-top: 0; } .bot > :last-child { margin-bottom: 0; }
+  .bot h1, .bot h2, .bot h3 { font-size: 15.5px; margin: 14px 0 6px; color: var(--accent); font-weight: 700; }
+  .bot ul, .bot ol { padding-left: 20px; margin: 6px 0; }
+  .bot table { border-collapse: collapse; margin: 8px 0; display: block; overflow-x: auto; }
+  .bot th, .bot td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; font-size: 14px; }
+  .bot th { background: var(--accent-light); font-weight: 600; color: var(--accent); }
+  .error { align-self: center; color: #c2410c; font-size: 13.5px; background: #fef3c7; padding: 12px 16px; border-radius: 8px; }
+  .typing { color: var(--muted); font-style: italic; }
+  .typing::after { content: ''; animation: dots 1.4s infinite; }
+  @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
+  .suggestions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .suggestions button {
+    font-size: 13px; border-radius: 20px; padding: 10px 16px;
+    border: 1px solid var(--accent); color: var(--accent); background: var(--accent-light);
+    font-weight: 500; transition: all 0.2s;
+  }
+  .suggestions button:hover { background: var(--accent); color: white; }
+  form {
+    display: flex; gap: 10px; max-width: 800px; width: 100%; margin: 0 auto;
+    padding: 16px 20px;
+  }
+  footer { border-top: 1px solid var(--border); background: var(--panel); box-shadow: 0 -2px 4px rgba(0,0,0,0.02); }
+  textarea {
+    flex: 1; resize: none; font: inherit; color: var(--text); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    min-height: 44px; max-height: 160px; transition: all 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  #send {
+    background: var(--accent); color: var(--accent-text); border-color: var(--accent);
+    font-weight: 700; padding: 10px 24px; flex-shrink: 0; transition: all 0.2s;
+  }
+  #send:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3); }
+  #send:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-content">
+    <div class="header-left">
+      <div class="header-logo">💰</div>
+      <div class="header-text">
+        <h1>Financial Advisor</h1>
+        <p>AI-powered financial guidance</p>
+      </div>
+    </div>
+    <button id="reset" type="button">✨ New Chat</button>
+  </div>
+</header>
+<main><div id="log"></div></main>
+<footer>
+  <form id="form">
+    <textarea id="input" rows="1" placeholder="Ask about budgeting, debt, saving, retirement…" autofocus></textarea>
+    <button id="send" type="submit">Send</button>
+  </form>
+</footer>
+<script>
+const log = document.getElementById('log');
+const input = document.getElementById('input');
+const send = document.getElementById('send');
+const main = document.querySelector('main');
+
+const SUGGESTIONS = [
+  "I'm 30 with $20k saved for retirement and add $500/month. I want $60k/year at 65. Am I on track?",
+  "I have $5k on a credit card at 22% and an $8k car loan at 6%. I can pay $600/month. What's the fastest way out?",
+  "What would the monthly payment be on a $350k mortgage at 6.5% for 30 years?",
+  "I take home $4,500/month. Rent is $1,500, food $600, car $400. How's my budget?",
+];
+
+const FEATURES = [
+  { icon: '📊', text: 'Budgeting' },
+  { icon: '💳', text: 'Debt Payoff' },
+  { icon: '🏦', text: 'Savings Plans' },
+  { icon: '🏠', text: 'Loans' },
+];
+
+function add(cls, content, markdown = false) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + cls;
+  if (markdown) el.innerHTML = DOMPurify.sanitize(marked.parse(content));
+  else el.textContent = content;
+  log.appendChild(el);
+  main.scrollTop = main.scrollHeight;
+  return el;
+}
+
+function showWelcome() {
+  log.innerHTML = '';
+  
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome-section';
+  welcome.innerHTML = '<h2>Welcome to Financial Advisor</h2><p>Let\'s talk about your finances! Get personalized guidance on budgeting, debt, savings, and more.</p>';
+  log.appendChild(welcome);
+  
+  const grid = document.createElement('div');
+  grid.className = 'features-grid';
+  FEATURES.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'feature-card';
+    card.innerHTML = `<div class="feature-icon">${f.icon}</div><div class="feature-text">${f.text}</div>`;
+    grid.appendChild(card);
+  });
+  log.appendChild(grid);
+  
+  add('bot', "Hi! I'm your personal financial advisor. I can help with budgeting, paying off debt, emergency funds, loans, investment strategies and retirement planning.\n\nShare some numbers or try one of these questions:", true);
+  
+  const wrap = document.createElement('div');
+  wrap.className = 'suggestions';
+  SUGGESTIONS.forEach(s => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = s;
+    b.onclick = () => { wrap.remove(); ask(s); };
+    wrap.appendChild(b);
+  });
+  log.appendChild(wrap);
+}
+
+async function ask(text) {
+  document.querySelector('.suggestions')?.remove();
+  add('user', text);
+  send.disabled = true;
+  const typing = add('bot typing', 'Thinking…');
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text}),
+    });
+    const data = await res.json();
+    typing.remove();
+    if (data.error) add('error', data.error);
+    else add('bot', data.reply, true);
+  } catch (e) {
+    typing.remove();
+    add('error', 'Could not reach the server. Is web.py still running?');
+  } finally {
+    send.disabled = false;
+    input.focus();
+  }
+}
+
+document.getElementById('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text || send.disabled) return;
+  input.value = ''; input.style.height = '';
+  ask(text);
+});
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); document.getElementById('form').requestSubmit(); }
+});
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+});
+
+document.getElementById('reset').onclick = async () => {
+  await fetch('/api/reset', {method: 'POST'});
+  showWelcome();
+};
+
+showWelcome();
+</script>
+</body>
+</html>
