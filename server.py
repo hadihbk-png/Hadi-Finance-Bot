@@ -1,6 +1,6 @@
-"""Financial Advisor Bot - browser chat.
+"""Local development server for testing (not used in Netlify deployment).
 
-Run:  python web.py   then open http://localhost:8000
+Run:  python server.py   then open http://localhost:8000
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from advisor import FinancialAdvisor
 app = Flask(__name__, static_folder="static")
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
 
-# One advisor (conversation history) per browser session, kept in memory.
 _advisors: dict[str, FinancialAdvisor] = {}
 
 
@@ -66,6 +65,6 @@ if __name__ == "__main__":
     if not os.getenv("AZURE_OPENAI_ENDPOINT"):
         sys.exit("AZURE_OPENAI_ENDPOINT is not set. Add it to the .env file.")
     port = int(os.getenv("PORT", "8000"))
-    host = os.getenv("HOST", "0.0.0.0")
     print(f"Financial Advisor Bot running at http://localhost:{port}")
-    app.run(host=host, port=port, debug=False)
+    print("Note: This is a development server. For production, use Netlify deployment.")
+    app.run(host="127.0.0.1", port=port, debug=False)

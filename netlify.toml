@@ -1,0 +1,15 @@
+[build]
+  command = "pip install -r requirements.txt"
+  functions = "netlify/functions"
+  publish = "static"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[env]
+  [env.production]
+    AZURE_OPENAI_ENDPOINT = "https://hadifinance.services.ai.azure.com"
+    AZURE_OPENAI_DEPLOYMENT = "gpt-5-mini"
+    OPENAI_API_VERSION = "2024-12-01-preview"

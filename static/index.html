@@ -200,17 +200,19 @@ async function ask(text) {
   send.disabled = true;
   const typing = add('bot typing', 'Thinking…');
   try {
-    const res = await fetch('/api/chat', {
+    let sid = sessionStorage.getItem('sid');
+    const res = await fetch('/.netlify/functions/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text}),
+      body: JSON.stringify({message: text, sid: sid}),
     });
     const data = await res.json();
+    if (data.sid) sessionStorage.setItem('sid', data.sid);
     typing.remove();
     if (data.error) add('error', data.error);
     else add('bot', data.reply, true);
   } catch (e) {
     typing.remove();
-    add('error', 'Could not reach the server. Is web.py still running?');
+    add('error', 'Could not reach the server. Please try again later.');
   } finally {
     send.disabled = false;
     input.focus();
@@ -234,7 +236,9 @@ input.addEventListener('input', () => {
 });
 
 document.getElementById('reset').onclick = async () => {
-  await fetch('/api/reset', {method: 'POST'});
+  let sid = sessionStorage.getItem('sid');
+  await fetch('/.netlify/functions/reset', {method: 'POST', body: JSON.stringify({sid: sid})});
+  sessionStorage.removeItem('sid');
   showWelcome();
 };
 
